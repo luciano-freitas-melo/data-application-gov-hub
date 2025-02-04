@@ -9,12 +9,14 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "~3.11"
 apache-airflow = "2.8.1"
+apache-airflow-providers-postgres = "5.14.0"
 dbt-core = "*"
 dbt-postgres = "*"
 pandas = "*"
 requests = "*"
 sqlalchemy = "*"
 zeep = "*"
+imap-tools = "*"
 
 [tool.poetry.group.dev.dependencies]
 black = "*"
