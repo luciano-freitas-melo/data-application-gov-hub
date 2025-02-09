@@ -3,15 +3,19 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 
 def get_postgres_conn() -> str:
-    hook = PostgresHook(postgres_conn_id="postgres_default")
-    conn = hook.connection
-    port = conn.port
-    schema = conn.schema
-    logging.info(
-        f"[empenhos_tesouro_ingest_dag.py] Obtained PostgreSQL connection: "
-        f"dbname={schema}, user={conn.login}, host={conn.host}, port={port}"
-    )
-    return (
-        f"dbname={schema} user={conn.login} password={conn.password} "
-        f"host={conn.host} port={port}"
-    )
+    try:
+        hook = PostgresHook(postgres_conn_id="postgres_default")
+        conn = hook.get_conn()
+        schema = conn.info.dbname
+        logging.info(
+            f"[postgres_helpers] Obtained PostgreSQL connection: "
+            f"dbname={schema}, user={conn.info.user},"
+            f"host={conn.info.host}, port={conn.info.port}"
+        )
+        return (
+            f"dbname={schema} user={conn.info.user} password={conn.info.password} "
+            f"host={conn.info.host} port={conn.info.port}"
+        )
+    except Exception as e:
+        logging.error(f"Failed to obtain PostgreSQL connection: {e}")
+        raise
