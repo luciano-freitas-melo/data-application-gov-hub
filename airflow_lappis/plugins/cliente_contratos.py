@@ -42,6 +42,34 @@ class ClienteContratos(ClienteBase):
             )
             return None
 
+    def get_contratos_inativos_by_ug(self, ug_code: str) -> list | None:
+        """
+        Obter todos os contratos inativos de uma UG específica.
+
+        Args:
+            ug_code (str): UG code
+
+        Returns:
+            list: lista de contratos inativos por ug
+        """
+        endpoint = f"/contrato/inativo/ug/{ug_code}"
+        logging.info(f"[cliente_contratos.py] Fetching contratos for UG code: {ug_code}")
+        status, data = self.request(
+            http.HTTPMethod.GET, endpoint, headers=self.BASE_HEADER
+        )
+        if status == http.HTTPStatus.OK and isinstance(data, list):
+            logging.info(
+                "[cliente_contratos.py] Successfully fetched contratos for UG code: "
+                f"{ug_code}"
+            )
+            return data
+        else:
+            logging.warning(
+                "[cliente_contratos.py] Failed to fetch contratos for UG code: "
+                f"{ug_code} with status: {status}"
+            )
+            return None
+
     def get_faturas_by_contrato_id(self, contrato_id: str) -> list | None:
         """
         Obter todas as faturas de um contrato específico.
