@@ -40,7 +40,7 @@ COLUMN_MAPPING = {
     18: "despesas_pagas_controle_empenho_movim_liquido_moeda_origem",
 }
 
-EMAIL_SUBJECT = "consulta_por_execucao_emp_liq_pago"
+EMAIL_SUBJECT = "consulta_por_execução_emp_liq_pago"
 
 
 # Configurações da DAG
