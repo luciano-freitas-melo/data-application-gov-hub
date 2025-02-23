@@ -2,7 +2,6 @@ with
 
     empenhos_raw as (
         select
-            id::integer as id,
             ne_ccor::text as ne_ccor,
             ne_informacao_complementar::text as ne_informacao_complementar,
             ne_ccor_descricao::text as ne_ccor_descricao,

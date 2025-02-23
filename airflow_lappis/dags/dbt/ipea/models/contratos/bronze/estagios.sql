@@ -12,7 +12,6 @@
 with
     estagios_raw as (
         select
-            id::integer as id,
             ne_ccor,
             ne_informacao_complementar::text,
 
@@ -71,7 +70,7 @@ with
                 despesas_pagas_controle_empenho_movim_liquido_moeda_origem
             ) as despesas_pagas_controle_empenho_movim_liquido_moeda_origem
 
-        from {{ source("siafi", "estagios") }}
+        from {{ source("siafi", "estagios_tesouro") }}
     )
 
 select *

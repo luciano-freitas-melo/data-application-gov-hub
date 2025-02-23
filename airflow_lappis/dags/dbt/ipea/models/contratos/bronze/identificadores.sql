@@ -13,12 +13,9 @@ with
     ),
 
     ids_table as (
-        select contrato_id, ne
-        from ids_from_empenhos
-        full join
-            ids_from_faturas
-            on ids_from_empenhos.contrato_id = ids_from_faturas.contrato_id
-            and ids_from_empenhos.ne = ids_from_faturas.ne
+        select *
+        from ids_from_empenhos e
+        full join ids_from_faturas f using (contrato_id, ne)
     ),
 
     contratos as (
@@ -31,14 +28,14 @@ with
                 when codigo_modalidade in ('05', '06')
                 then
                     concat(
-                        contratante_orgao_unidade_gestora_codigo,
+                        contratante__orgao__unidade_gestora__codigo,
                         codigo_modalidade,
                         replace(numero, '/', '')
                     )
                 when codigo_modalidade = '07'
                 then
                     concat(
-                        contratante_orgao_unidade_gestora_codigo,
+                        contratante__orgao__unidade_gestora__codigo,
                         codigo_modalidade,
                         replace(licitacao_numero, '/', '')
                     )

@@ -13,5 +13,5 @@ sources:
     schema: siafi
     tables:
       - name: empenhos_tesouro
-      - name: estagios
+      - name: estagios_tesouro
 

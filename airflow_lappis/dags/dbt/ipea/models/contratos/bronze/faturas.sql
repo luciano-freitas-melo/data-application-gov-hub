@@ -29,10 +29,11 @@ with
             chave_nfe::text as chave_nfe,
             dados_referencia::text as dados_referencia,
             dados_item_faturado::text as dados_item_faturado,
-            jsonb_array_elements(dados_empenho::jsonb) as dados_empenho
+            jsonb_array_elements(
+                replace(dados_empenho, '''', '"')::jsonb
+            ) as dados_empenho
         from {{ source("compras_gov", "faturas") }}
     ),
-
     -- Extrai os campos do JSON e transforma em colunas individuais
     faturas_dados_empenho as (
         select
@@ -43,8 +44,6 @@ with
             f.dados_empenho ->> 'subelemento' as subelemento,
             now() as inserted_at
         from faturas_raw as f
-    )
-
---
+    )  --
 select *
 from faturas_dados_empenho

@@ -13,10 +13,10 @@ with
             naturezadespesa,
             informacao_complementar,
             sistema_origem,
-            links_documento_pagamento,
-            credor_obj_tipo,
-            credor_obj_cnpj_cpf_idgener,
-            credor_obj_nome,
+            links__documento_pagamento as links_documento_pagamento,
+            credor_obj__tipo as credor_obj_tipo,
+            credor_obj__cnpj_cpf_idgener as credor_obj_cnpj_cpf_idgener,
+            credor_obj__nome as credor_obj_nome,
 
             -- Tratar valores nulos ou inválidos nas colunas de data
             replace(replace(empenhado::text, '.', ''), ',', '.')::numeric(

@@ -14,7 +14,7 @@ with
                 when vp.despesas_pagas = c.valor_global then 'Sim' else 'Não'
             end as pendente_baixa
         from {{ ref("contratos") }} as c
-        left join valores_pagos_contratos as vp on c.id = vp.id
+        left join valores_pagos_contratos as vp using (id)
     )
 
 --
@@ -40,9 +40,9 @@ select
         else fornecedor_tipo
     end as fornecedor_tipo,
     concat(
-        contratante_orgao_origem_unidade_gestora_origem_codigo,
+        contratante__orgao_origem__unidade_gestora_origem__codigo,
         ' - ',
-        contratante_orgao_origem_unidade_gestora_origem_nome_resumido
+        contratante__orgao_origem__unidade_gestora_origem__nome_resumido
     ) as "Unidade",
     case
         when vigencia_fim - vigencia_inicio >= 730 and num_parcelas > 1

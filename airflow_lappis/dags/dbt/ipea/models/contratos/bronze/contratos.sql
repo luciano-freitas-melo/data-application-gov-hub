@@ -7,31 +7,25 @@ with
             cast(id as text) as id,
             receita_despesa,
             numero,
-            cast(
-                contratante_orgao_origem_codigo as int
-            ) as contratante_orgao_origem_codigo,
-            contratante_orgao_origem_nome,
-            cast(
-                contratante_orgao_origem_unidade_gestora_origem_codigo as int
-            ) as contratante_orgao_origem_unidade_gestora_origem_codigo,
-            contratante_orgao_origem_unidade_gestora_origem_nome_resumido,
-            contratante_orgao_origem_unidade_gestora_origem_nome,
-            contratante_orgao_origem_unidade_gestora_origem_sisg,
-            contratante_orgao_origem_unidade_gestora_origem_utiliza_siafi,
-            contratante_orgao_origem_unidade_gestora_origem_utiliza_antecip,
-            cast(contratante_orgao_codigo as int) as contratante_orgao_codigo,
-            contratante_orgao_nome,
-            cast(
-                contratante_orgao_unidade_gestora_codigo as int
-            ) as contratante_orgao_unidade_gestora_codigo,
-            contratante_orgao_unidade_gestora_nome_resumido,
-            contratante_orgao_unidade_gestora_nome,
-            contratante_orgao_unidade_gestora_sisg,
-            contratante_orgao_unidade_gestora_utiliza_siafi,
-            contratante_orgao_unidade_gestora_utiliza_antecipagov,
-            fornecedor_tipo,
-            fornecedor_nome,
-            cast(codigo_tipo as int) as codigo_tipo,
+            contratante__orgao_origem__codigo,
+            contratante__orgao_origem__nome,
+            contratante__orgao_origem__unidade_gestora_origem__codigo,
+            contratante__orgao_origem__unidade_gestora_origem__nome_resumido,
+            contratante__orgao_origem__unidade_gestora_origem__nome,
+            contratante__orgao_origem__unidade_gestora_origem__sisg,
+            contratante__orgao_origem__unidade_gestora_origem__utiliza_siafi,
+            contratante__orgao_origem__unidade_gestora_origem__utiliza_antecip,
+            contratante__orgao__codigo,
+            contratante__orgao__nome,
+            contratante__orgao__unidade_gestora__codigo,
+            contratante__orgao__unidade_gestora__nome_resumido,
+            contratante__orgao__unidade_gestora__nome,
+            contratante__orgao__unidade_gestora__sisg,
+            contratante__orgao__unidade_gestora__utiliza_siafi,
+            contratante__orgao__unidade_gestora__utiliza_antecipagov,
+            fornecedor__tipo as fornecedor_tipo,
+            fornecedor__nome as fornecedor_nome,
+            codigo_tipo as codigo_tipo,
             tipo,
             subtipo,
             prorrogavel,
@@ -45,7 +39,7 @@ with
             informacao_complementar,
             codigo_modalidade,
             modalidade,
-            cast(unidade_compra as int) as unidade_compra,
+            unidade_compra as unidade_compra,
             licitacao_numero,
             sistema_origem_licitacao,
             cast(num_parcelas as int) as num_parcelas,
@@ -71,7 +65,7 @@ with
                 ) as numeric(15, 2)
             ) as valor_acumulado,
             regexp_replace(
-                fornecedor_cnpj_cpf_idgener, '[^0-9A-Za-z]', '', 'g'
+                fornecedor__cnpj_cpf_idgener, '[^0-9A-Za-z]', '', 'g'
             ) as fornecedor_cnpj_cpf_idgener,
             regexp_replace(processo, '[^0-9A-Za-z]', '', 'g') as processo,
             -- Conversão de valores numéricos para FLOAT ou INT
