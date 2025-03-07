@@ -35,7 +35,7 @@ def notas_de_credito_dag() -> None:
                     "notas_de_credito",
                     conflict_fields=["id_nota"],
                     primary_key=["id_nota"],
-                    schema="ted",
+                    schema="transfere_gov",
                 )
             else:
                 logging.warning(f"No notas de credito found for UG code: {ug_code}")

@@ -43,7 +43,7 @@ def api_programa_beneficiario_dag() -> None:
                 "beneficiario",
                 primary_key=["id_programa"],
                 conflict_fields=["id_programa"],
-                schema="ted",
+                schema="transfere_gov",
             )
         else:
             logging.warning(
