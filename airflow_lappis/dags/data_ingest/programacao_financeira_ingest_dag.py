@@ -35,7 +35,7 @@ def programacao_financeira_dag() -> None:
                     "programacao_financeira",
                     conflict_fields=["id_programacao"],
                     primary_key=["id_programacao"],
-                    schema="ted",
+                    schema="transfere_gov",
                 )
             else:
                 logging.warning(f"No programacao financeira found for UG code: {ug_code}")

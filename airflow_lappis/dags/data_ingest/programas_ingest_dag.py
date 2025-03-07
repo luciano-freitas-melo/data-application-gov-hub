@@ -37,7 +37,7 @@ def api_programas_dag() -> None:
                     "programas",
                     primary_key=["tx_codigo_programa"],
                     conflict_fields=["tx_codigo_programa"],
-                    schema="ted",
+                    schema="transfere_gov",
                 )
             else:
                 logging.warning(f"No programas found for id_programas: {id_programas}")
