@@ -21,6 +21,7 @@ with
     contratos as (
         select
             id::text as contrato_id,
+            categoria,
             case when length(numero) = 12 then numero end as ne,
             regexp_replace(processo, '[^0-9]', '', 'g') as processo,
             regexp_replace(fornecedor_cnpj_cpf_idgener, '[/.-]', '', 'g') as cnpj_cpf,
@@ -46,6 +47,7 @@ with
     identificadores as (
         select
             c.contrato_id,
+            c.categoria,
             c.processo,
             c.cnpj_cpf,
             c.info_complementar,

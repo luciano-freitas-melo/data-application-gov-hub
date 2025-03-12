@@ -1,3 +1,5 @@
+{{ config(unikey_key="id") }}
+
 with
     faturas_raw as (
         select

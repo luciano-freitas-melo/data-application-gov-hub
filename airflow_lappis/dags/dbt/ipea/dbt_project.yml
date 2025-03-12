@@ -19,7 +19,7 @@ clean-targets:
 
 models:
   ipea: 
-    contratos:
+    contratos_dbt:
       +materialized: table
       +database: analytics
       +schema: contratos

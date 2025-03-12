@@ -1,5 +1,4 @@
 with
-
     empenhos_raw as (
         select
             ne_ccor::text as ne_ccor,

@@ -5,7 +5,9 @@
     as
         $$
 	select
-		case when in_text like '(%' then regexp_replace(replace(coalesce(in_text, '0'), '.', ''), '(\()?(\d+),(\d+)(\))?', '-\2.\3')::numeric(15,2)
+		case 
+			when in_text like '%NaN%' then 0.00::numeric(15,2) 
+			when in_text like '(%' then regexp_replace(replace(coalesce(in_text, '0'), '.', ''), '(\()?(\d+),(\d+)(\))?', '-\2.\3')::numeric(15,2)
 			else replace(replace(coalesce(in_text, '0'), '.', ''), ',', '.')::numeric(15,2) end as result
 $$
     language sql

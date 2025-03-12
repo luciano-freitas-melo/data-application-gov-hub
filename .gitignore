@@ -47,3 +47,8 @@ logs/
 # System files
 .DS_Store
 Thumbs.db
+
+# VPN 
+/connect.sh
+*.ovpn
+*.p12

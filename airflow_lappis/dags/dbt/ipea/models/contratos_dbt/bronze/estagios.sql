@@ -31,7 +31,7 @@ with
             mes_lancamento,
             case
                 when length(ne_num_processo::text) > 3
-                then regexp_replace(ltrim(ne_num_processo::text, '0'), '[\./-]', '', 'g')
+                then regexp_replace(ne_num_processo::text, '[\./-]', '', 'g')
                 else ne_num_processo::text
             end as ne_num_processo,
 

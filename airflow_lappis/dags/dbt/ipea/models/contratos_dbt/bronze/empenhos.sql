@@ -1,3 +1,5 @@
+{{ config(unikey_key="id") }}
+
 with
     empenhos as (
         select

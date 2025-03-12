@@ -1,3 +1,5 @@
+{{ config(unikey_key="id") }}
+
 select
     id::integer as id,
     contrato_id::integer as contrato_id,
@@ -9,6 +11,5 @@ select
     anoref::integer as anoref,
     retroativo::text as retroativo,
     replace(replace(valor::text, '.', ''), ',', '.')::numeric(15, 2) as valor,
-    vencimento::date as vencimento,
-    now() as inserted_at
+    vencimento::date as vencimento
 from {{ source("compras_gov", "cronograma") }}
