@@ -307,3 +307,20 @@ class ClientPostgresDB:
                     f"[cliente_postgres.py] Table {schema}.{table_name} "
                     f"altered successfully"
                 )
+
+    def get_nota_credito(self) -> List[Tuple[Any, ...]]:
+        """Extrai o número da nota de crédito e o valor da tabela nota_credito.
+
+        Returns:
+            List[Tuple[Any, ...]]: Lista de tuplas com número da nota de crédito e valor
+        """
+        query = (
+            "SELECT cd_ug_emitente_nota, cd_gestao_emitente_nota, tx_numero_nota "
+            "FROM transfere_gov.notas_de_credito"
+        )
+
+        with psycopg2.connect(self.conn_str) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(query)
+                nota_credito = cursor.fetchall()
+                return nota_credito
