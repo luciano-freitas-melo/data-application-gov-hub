@@ -28,6 +28,10 @@ def nota_credito_siafi_dag() -> None:
             cd_ug_emitente_nota = nota_credito[0]
             cd_gestao_emitente_nota = nota_credito[1]
             tx_numero_nota = nota_credito[2]
+
+            if not all([cd_ug_emitente_nota, cd_gestao_emitente_nota, tx_numero_nota]):
+                continue
+
             ano = tx_numero_nota[:4]
             numero = tx_numero_nota[-6:]
 
