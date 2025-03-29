@@ -1,5 +1,8 @@
 import logging
+import os
+import yaml
 from airflow.decorators import dag, task
+from airflow.models import Variable
 from datetime import datetime, timedelta
 from postgres_helpers import get_postgres_conn
 from cliente_contratos import ClienteContratos
@@ -22,18 +25,36 @@ def api_contratos_inativos_dag() -> None:
 
     @task
     def fetch_and_store_contratos_inativos() -> None:
-        logging.info("Starting fetch_and_store_contratos task")
+        logging.info("Starting fetch_and_store_contratos_inativos task")
+
+        orgao_alvo = Variable.get("ORGAO_ALVO", default_var=None)
+        if not orgao_alvo:
+            logging.error("Variável ORGAO_ALVO não definida no Airflow!")
+            raise ValueError("ORGAO_ALVO não definida no Airflow")
+
+        config_path = os.path.join(
+            os.environ.get("AIRFLOW_HOME", "/opt/airflow"), "configs/orgaos.yaml"
+        )
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+
+        orgaos = config.get("orgaos", {})
+        ug_codes = orgaos.get(orgao_alvo, {}).get("codigos_ug", [])
+
+        if not ug_codes:
+            logging.warning(f"Nenhum código UG encontrado para o órgão '{orgao_alvo}'")
+            return
+
         api = ClienteContratos()
         postgres_conn_str = get_postgres_conn()
         db = ClientPostgresDB(postgres_conn_str)
-        ug_codes = [113601, 113602]
 
         for ug_code in ug_codes:
-            logging.info(f"Fetching contratos for UG code: {ug_code}")
+            logging.info(f"Fetching contratos inativos for UG code: {ug_code}")
             contratos = api.get_contratos_inativos_by_ug(ug_code)
             if contratos:
                 logging.info(
-                    f"Inserting contratos for UG code: " f"{ug_code} into PostgreSQL"
+                    f"Inserting contratos inativos for UG code: {ug_code} into PostgreSQL"
                 )
                 db.insert_data(
                     contratos,
@@ -43,7 +64,7 @@ def api_contratos_inativos_dag() -> None:
                     schema="compras_gov",
                 )
             else:
-                logging.warning(f"No contratos found for UG code: {ug_code}")
+                logging.warning(f"No contratos inativos found for UG code: {ug_code}")
 
     fetch_and_store_contratos_inativos()
 
