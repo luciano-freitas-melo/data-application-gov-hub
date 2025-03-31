@@ -17,7 +17,7 @@ cat > .git/hooks/pre-push << 'EOF'
 #!/bin/bash
 set -e
 echo "Running pre-push checks..."
-make lint
+make lint -e GITLAB_CI=TRUE
 make test
 echo -e "\033[0;32mPre-push checks passed!\033[0m"
 exit 0
