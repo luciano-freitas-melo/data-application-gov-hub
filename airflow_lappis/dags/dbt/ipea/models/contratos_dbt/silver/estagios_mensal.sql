@@ -35,7 +35,7 @@ with
             ne,
             cnpj_cpf,
             info_complementar,
-            parse_date(mes_lancamento) as mes_lancamento,
+            {{ target.schema }}.parse_date(mes_lancamento) as mes_lancamento,
             min(num_processo) over (partition by ne) as num_processo,
             valor_empenhado,
             valor_liquidado,

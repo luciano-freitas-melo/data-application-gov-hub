@@ -1,3 +1,15 @@
+{{
+    config(
+        unique_key=[
+            "ne_ccor",
+            "natureza_despesa_detalhada",
+            "doc_observacao",
+            "ne_ccor_ano_emissao",
+        ],
+        incremental_strategy="merge",
+    )
+}}
+
 with
     empenhos_raw as (
         select
@@ -15,24 +27,36 @@ with
             item_informacao::integer as ne_ccor_ano_emissao_1,
             regexp_replace(ne_num_processo, '[./-]', '') as ne_num_processo,
             -- Aplicando NULLIF e removendo parênteses antes de converter para NUMERIC
-            {{ target.schema }}.parse_number(
-                despesas_empenhadas_controle_empenho_saldo_moeda_origem
-            ) as despesas_empenhadas_saldo,
-            {{ target.schema }}.parse_number(
-                despesas_empenhadas_controle_empenho_movim_liquido_moeda_origem
-            ) as despesas_empenhadas_movim_liquido,
-            {{ target.schema }}.parse_number(
-                despesas_liquidadas_controle_empenho_saldo_moeda_origem
-            ) as despesas_liquidadas_saldo,
-            {{ target.schema }}.parse_number(
-                despesas_liquidadas_controle_empenho_movim_liquido_moeda_origem
-            ) as despesas_liquidadas_movim_liquido,
-            {{ target.schema }}.parse_number(
-                despesas_pagas_controle_empenho_saldo_moeda_origem
-            ) as despesas_pagas_saldo,
-            {{ target.schema }}.parse_number(
-                despesas_pagas_controle_empenho_movim_liquido_moeda_origem
-            ) as despesas_pagas_movim_liquido
+            {{
+                parse_financial_value(
+                    "despesas_empenhadas_controle_empenho_saldo_moeda_origem"
+                )
+            }} as despesas_empenhadas_saldo,
+            {{
+                parse_financial_value(
+                    "despesas_empenhadas_controle_empenho_movim_liquido_moeda_origem"
+                )
+            }} as despesas_empenhadas_movim_liquido,
+            {{
+                parse_financial_value(
+                    "despesas_liquidadas_controle_empenho_saldo_moeda_origem"
+                )
+            }} as despesas_liquidadas_saldo,
+            {{
+                parse_financial_value(
+                    "despesas_liquidadas_controle_empenho_movim_liquido_moeda_origem"
+                )
+            }} as despesas_liquidadas_movim_liquido,
+            {{
+                parse_financial_value(
+                    "despesas_pagas_controle_empenho_saldo_moeda_origem"
+                )
+            }} as despesas_pagas_saldo,
+            {{
+                parse_financial_value(
+                    "despesas_pagas_controle_empenho_movim_liquido_moeda_origem"
+                )
+            }} as despesas_pagas_movim_liquido
         from {{ source("siafi", "empenhos_tesouro") }}
         where ne_ccor != 'Total'
     )

@@ -14,4 +14,13 @@ sources:
     tables:
       - name: empenhos_tesouro
       - name: estagios_tesouro
+      - name: ncs_tesouro
+  
+  - name: transfere_gov
+    schema: transfere_gov
+    tables:
+      - name: notas_de_credito
+      - name: planos_acao
+      - name: programacao_financeira
+      - name: programas
 

@@ -1,3 +1,15 @@
+{{
+    config(
+        unique_key=[
+            "ne_ccor",
+            "doc_observacao",
+            "natureza_despesa_detalhada",
+            "mes_lancamento",
+        ],
+        incremental_strategy="merge",
+    )
+}}
+
 -- Comentário: O erro indica que há valores com parênteses "(660000.00)" que não podem
 -- ser convertidos para double precision
 -- O erro está ocorrendo nas colunas de valores monetários, especificamente em:

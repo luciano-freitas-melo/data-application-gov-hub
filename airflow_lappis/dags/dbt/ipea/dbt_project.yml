@@ -19,16 +19,20 @@ clean-targets:
 
 models:
   ipea: 
+    +database: analytics
     contratos_dbt:
       +materialized: table
-      +database: analytics
       +schema: contratos
       bronze:
         +materialized: incremental
-    pessoas:
+    pessoas_dbt:
       +materialized: table
-      +database: analytics
       +schema: pessoas
+    ted_dbt:
+      +materialized: table
+      +schema: ted
+      views:
+        +materialized: view
 
 on-run-start:
   - '{{create_udfs()}}'
