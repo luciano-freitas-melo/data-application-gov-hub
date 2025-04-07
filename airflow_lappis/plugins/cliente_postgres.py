@@ -180,9 +180,9 @@ class ClientPostgresDB:
                 )
                 return results
 
-    def get_contratos_ids(self) -> List[int]:
+    def get_contratos_ids(self, schema: str = "compras_gov") -> List[int]:
         """Extrai todos os IDs de contratos da tabela contratos."""
-        query = "SELECT id FROM raw.contratos"
+        query = f"SELECT id FROM {schema}.contratos"
 
         with psycopg2.connect(self.conn_str) as conn:
             with conn.cursor() as cursor:
