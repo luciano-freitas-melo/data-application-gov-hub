@@ -43,8 +43,8 @@ COLUMN_MAPPING = {
     20: "despesas_pagas_controle_empenho_movim_liquido_moeda_origem",
 }
 
-EMAIL_SUBJECT = "consulta_por_execução_emp_liq_pago_mensal"
-
+EMAIL_SUBJECT = "consulta_por_execucao_emp_liq_pago_mensal"
+SKIPROWS = 5
 
 # Configurações da DAG
 with DAG(
@@ -67,12 +67,13 @@ with DAG(
         try:
             logging.info("Iniciando o processamento dos emails...")
             csv_data = fetch_and_process_email(
+                IMAP_SERVER,
                 EMAIL,
                 PASSWORD,
-                IMAP_SERVER,
                 SENDER_EMAIL,
                 EMAIL_SUBJECT,
                 COLUMN_MAPPING,
+                skiprows=SKIPROWS,
             )
             if not csv_data:
                 logging.warning("Nenhum e-mail encontrado com o assunto esperado.")

@@ -14,9 +14,11 @@ logging.basicConfig(
 )
 
 
-def format_csv(csv_data: str, column_mapping: Dict[int, str]) -> pd.DataFrame:
+def format_csv(
+    csv_data: str, column_mapping: Dict[int, str], skiprows: int
+) -> pd.DataFrame:
     """Formata um arquivo CSV conforme mapeamento de colunas."""
-    df = pd.read_csv(io.StringIO(csv_data), skiprows=9, header=None)
+    df = pd.read_csv(io.StringIO(csv_data), skiprows=skiprows, header=None)
     column_names: List[str] = [
         column_mapping.get(i, f"col_{i}") for i in range(len(df.columns))
     ]
@@ -25,7 +27,7 @@ def format_csv(csv_data: str, column_mapping: Dict[int, str]) -> pd.DataFrame:
 
 
 def extract_csv_from_zip(
-    zip_payload: bytes, column_mapping: dict
+    zip_payload: bytes, column_mapping: dict, skiprows: int = 0
 ) -> Optional[pd.DataFrame]:
     """Extrai e formata o primeiro arquivo CSV encontrado em um ZIP."""
     with zipfile.ZipFile(io.BytesIO(zip_payload)) as zip_file:
@@ -34,7 +36,7 @@ def extract_csv_from_zip(
                 raw_data = zip_file.read(file_name)
                 encoding = chardet.detect(raw_data)["encoding"]
                 decoded_data = raw_data.decode(encoding)
-                return format_csv(decoded_data, column_mapping)
+                return format_csv(decoded_data, column_mapping, skiprows)
     return None
 
 
@@ -58,6 +60,7 @@ def fetch_and_process_email(
     sender_email: str,
     subject: str,
     column_mapping: dict,
+    skiprows: int = 0,
 ) -> Optional[str]:
     """Busca e processa o primeiro e-mail com um ZIP contendo um CSV formatado."""
     try:
@@ -65,7 +68,7 @@ def fetch_and_process_email(
             imap_server, email, password, sender_email, subject
         )
         if zip_payload:
-            csv_data = extract_csv_from_zip(zip_payload, column_mapping)
+            csv_data = extract_csv_from_zip(zip_payload, column_mapping, skiprows)
             if csv_data is not None:
                 return csv_data.to_csv(index=False)
         logging.warning("Nenhum CSV processado.")

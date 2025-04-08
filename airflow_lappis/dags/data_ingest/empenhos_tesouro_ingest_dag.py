@@ -41,7 +41,7 @@ COLUMN_MAPPING = {
 }
 
 EMAIL_SUBJECT = "notas_de_empenhos_a_partir_de_2024"
-
+SKIPROWS = 9
 
 # Configurações da DAG
 with DAG(
@@ -70,6 +70,7 @@ with DAG(
                 SENDER_EMAIL,
                 EMAIL_SUBJECT,
                 COLUMN_MAPPING,
+                skiprows=SKIPROWS,
             )
             if not csv_data:
                 logging.warning("Nenhum e-mail encontrado com o assunto esperado.")
