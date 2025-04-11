@@ -1,4 +1,4 @@
-{{ config(unikey_key="id") }}
+{{ config(materialized="table") }}
 
 with
     cronogramas as (
@@ -13,7 +13,8 @@ with
             anoref::integer as anoref,
             retroativo::text as retroativo,
             replace(replace(valor::text, '.', ''), ',', '.')::numeric(15, 2) as valor,
-            vencimento::date as vencimento
+            vencimento::date as vencimento,
+            now() as updated_at
         from {{ source("compras_gov", "cronograma") }}
     ),
 
