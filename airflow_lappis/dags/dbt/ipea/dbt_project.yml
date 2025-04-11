@@ -25,9 +25,13 @@ models:
       +schema: contratos
       bronze:
         +materialized: incremental
+      views:
+        +materialized: view
     pessoas_dbt:
       +materialized: table
       +schema: pessoas
+      views:
+        +materialized: view
     ted_dbt:
       +materialized: table
       +schema: ted
