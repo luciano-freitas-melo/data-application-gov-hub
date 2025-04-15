@@ -15,6 +15,7 @@ sources:
       - name: empenhos_tesouro
       - name: estagios_tesouro
       - name: ncs_tesouro
+      - name: pf_tesouro
   
   - name: transfere_gov
     schema: transfere_gov

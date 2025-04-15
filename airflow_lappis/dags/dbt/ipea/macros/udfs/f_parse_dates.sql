@@ -35,7 +35,7 @@
         )
                 
         select
-            to_date(ano::numeric - 1 || '-' || '12', 'YYYY-MM') + (mes_num || ' months')::interval as result
+            (to_date(ano::numeric - 1 || '-' || '12', 'YYYY-MM') + (mes_num || ' months')::interval)::date as result
         from fixed_month
     $$
     language sql
