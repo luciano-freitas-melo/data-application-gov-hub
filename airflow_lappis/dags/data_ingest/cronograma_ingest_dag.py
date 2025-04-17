@@ -27,6 +27,11 @@ def api_cronogramas_dag() -> None:
         db = ClientPostgresDB(postgres_conn_str)
         contratos_ids = db.get_contratos_ids()
 
+        # Drop the existing cronograma table before inserting new data
+        logging.info("[cronograma_ingest_dag.py] Dropping existing cronograma table")
+        db.drop_table_if_exists("cronograma", schema="compras_gov")
+        logging.info("[cronograma_ingest_dag.py] Table dropped successfully")
+
         for contrato_id in contratos_ids:
             logging.info(
                 f"[cronograma_ingest_dag.py] Fetching cronograma for contrato ID: "
