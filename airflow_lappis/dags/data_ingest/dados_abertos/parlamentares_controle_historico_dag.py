@@ -11,10 +11,72 @@ from cliente_senadores import ClienteSenadores
 from postgres_helpers import get_postgres_conn
 from schedule_loader import get_dynamic_schedule
 
-
 CONTROLE_TABLE = "parlamentares_controle"
 CONTROLE_SCHEMA = "dados_abertos"
 
+# Helpers
+
+def _table_exists(cursor, schema: str, table: str) -> bool:
+    cursor.execute(
+        """
+        SELECT EXISTS (
+            SELECT 1
+              FROM information_schema.tables
+             WHERE table_schema = %s
+               AND table_name = %s
+        )
+        """,
+        (schema, table),
+    )
+    return bool(cursor.fetchone()[0])
+
+def _table_has_column(cursor, schema: str, table: str, column: str) -> bool:
+    cursor.execute(
+        """
+        SELECT EXISTS (
+            SELECT 1
+              FROM information_schema.columns
+             WHERE table_schema = %s
+               AND table_name = %s
+               AND column_name = %s
+        )
+        """,
+        (schema, table, column),
+    )
+    return bool(cursor.fetchone()[0])
+
+def _fetch_historico_ids(cursor, schema: str, table: str) -> set[int]:
+    if not _table_exists(cursor, schema, table):
+        return set()
+
+    cursor.execute(
+        f"""
+        SELECT DISTINCT CAST(id::text AS BIGINT)
+          FROM {schema}.{table}
+         WHERE id IS NOT NULL
+           AND id::text ~ '^[0-9]+$'
+        """
+    )
+    return {int(row[0]) for row in cursor.fetchall()}
+
+def _clean_existing_historico(conn_str: str, schema: str, table: str, records: list[dict]) -> None:
+    """Remove o histórico antigo para evitar duplicação antes do insert em lote."""
+    if not records:
+        return
+        
+    ids = tuple(set(item["parlamentar_id"] for item in records if "parlamentar_id" in item))
+    if not ids:
+        return
+
+    with psycopg2.connect(conn_str) as conn:
+        with conn.cursor() as cursor:
+            if _table_exists(cursor, schema, table):
+                cursor.execute(
+                    f"DELETE FROM {schema}.{table} WHERE parlamentar_id IN %s",
+                    (ids,)
+                )
+
+# ---
 
 @dag(
     schedule_interval=get_dynamic_schedule("parlamentares_controle_historico_dag"),
@@ -28,15 +90,12 @@ CONTROLE_SCHEMA = "dados_abertos"
     tags=["MIR", "dados_abertos", "parlamentares", "deputados", "senadores", "historico"],
 )
 def parlamentares_controle_historico_dag() -> None:
-    """Sincroniza parlamentares atuais e controla extração de histórico por estado."""
+    """Sincroniza parlamentares atuais e controla extração de histórico por ciclo temporal."""
 
     @task
     def sync_atuais() -> dict[str, list[int]]:
         """Task 1: Busca parlamentares atuais da Câmara e do Senado."""
-        logging.info(
-            "[parlamentares_controle_historico_dag.py] "
-            "Iniciando sync de parlamentares atuais"
-        )
+        logging.info("[parlamentares_controle_historico_dag.py] Iniciando sync de parlamentares atuais")
 
         cliente_deputados = ClienteDeputados()
         cliente_senadores = ClienteSenadores()
@@ -65,8 +124,7 @@ def parlamentares_controle_historico_dag() -> None:
             int(item.get("IdentificacaoParlamentar", {}).get("CodigoParlamentar"))
             for item in senadores
             if isinstance(item, dict)
-            and item.get("IdentificacaoParlamentar", {}).get("CodigoParlamentar")
-            is not None
+            and item.get("IdentificacaoParlamentar", {}).get("CodigoParlamentar") is not None
         }
 
         payload = {
@@ -75,14 +133,14 @@ def parlamentares_controle_historico_dag() -> None:
         }
 
         logging.info(
-            "[parlamentares_controle_historico_dag.py] Sync concluido: "
+            f"[parlamentares_controle_historico_dag.py] Sync concluido: "
             f"camara={len(payload['camara'])}, senado={len(payload['senado'])}"
         )
         return payload
 
     @task
     def state_logic(parlamentares_atuais: dict[str, list[int]]) -> list[dict[str, str]]:
-        """Task 2: Mantém a tabela de controle com estados de ciclo de vida."""
+        """Task 2: Mantém a tabela de controle com estados de atividade."""
         conn_str = get_postgres_conn("postgres_mir")
 
         create_table_sql = f"""
@@ -101,58 +159,6 @@ def parlamentares_controle_historico_dag() -> None:
 
         now = datetime.now()
 
-        def _table_exists(
-            cursor: psycopg2.extensions.cursor, schema: str, table: str
-        ) -> bool:
-            cursor.execute(
-                """
-                SELECT EXISTS (
-                    SELECT 1
-                      FROM information_schema.tables
-                     WHERE table_schema = %s
-                       AND table_name = %s
-                )
-                """,
-                (schema, table),
-            )
-            return bool(cursor.fetchone()[0])
-
-        def _fetch_historico_ids(
-            cursor: psycopg2.extensions.cursor, schema: str, table: str
-        ) -> set[int]:
-            if not _table_exists(cursor, schema, table):
-                return set()
-
-            cursor.execute(
-                f"""
-                SELECT DISTINCT CAST(id::text AS BIGINT)
-                  FROM {schema}.{table}
-                 WHERE id IS NOT NULL
-                   AND id::text ~ '^[0-9]+$'
-                """
-            )
-            return {int(row[0]) for row in cursor.fetchall()}
-
-        def _table_has_column(
-            cursor: psycopg2.extensions.cursor,
-            schema: str,
-            table: str,
-            column: str,
-        ) -> bool:
-            cursor.execute(
-                """
-                SELECT EXISTS (
-                    SELECT 1
-                      FROM information_schema.columns
-                     WHERE table_schema = %s
-                       AND table_name = %s
-                       AND column_name = %s
-                )
-                """,
-                (schema, table, column),
-            )
-            return bool(cursor.fetchone()[0])
-
         with psycopg2.connect(conn_str) as conn:
             with conn.cursor() as cursor:
                 cursor.execute(create_table_sql)
@@ -161,12 +167,8 @@ def parlamentares_controle_historico_dag() -> None:
                 controle_vazio = cursor.fetchone()[0] == 0
 
                 if controle_vazio:
-                    historico_camara_ids = _fetch_historico_ids(
-                        cursor, "camara_deputados", "deputados"
-                    )
-                    historico_senado_ids = _fetch_historico_ids(
-                        cursor, "senado_federal", "senadores"
-                    )
+                    historico_camara_ids = _fetch_historico_ids(cursor, "camara_deputados", "deputados")
+                    historico_senado_ids = _fetch_historico_ids(cursor, "senado_federal", "senadores")
 
                     for fonte, ids_historicos in (
                         ("camara", historico_camara_ids),
@@ -194,14 +196,7 @@ def parlamentares_controle_historico_dag() -> None:
                             cursor,
                             f"""
                             INSERT INTO {CONTROLE_SCHEMA}.{CONTROLE_TABLE}
-                                (
-                                    fonte,
-                                    parlamentar_id,
-                                    status,
-                                    first_seen_at,
-                                    last_seen_at,
-                                    updated_at
-                                )
+                                (fonte, parlamentar_id, status, first_seen_at, last_seen_at, updated_at)
                             VALUES %s
                             ON CONFLICT (fonte, parlamentar_id)
                             DO UPDATE SET
@@ -212,10 +207,8 @@ def parlamentares_controle_historico_dag() -> None:
                         )
 
                         logging.info(
-                            "[parlamentares_controle_historico_dag.py] "
-                            "Bootstrap realizado "
-                            f"para fonte={fonte}: universo={len(universo)}, "
-                            f"atuais={len(ids_atuais)}"
+                            f"[parlamentares_controle_historico_dag.py] Bootstrap realizado para "
+                            f"fonte={fonte}: universo={len(universo)}, atuais={len(ids_atuais)}"
                         )
 
                 for fonte in ("camara", "senado"):
@@ -230,14 +223,7 @@ def parlamentares_controle_historico_dag() -> None:
                             cursor,
                             f"""
                             INSERT INTO {CONTROLE_SCHEMA}.{CONTROLE_TABLE}
-                                (
-                                    fonte,
-                                    parlamentar_id,
-                                    status,
-                                    first_seen_at,
-                                    last_seen_at,
-                                    updated_at
-                                )
+                                (fonte, parlamentar_id, status, first_seen_at, last_seen_at, updated_at)
                             VALUES %s
                             ON CONFLICT (fonte, parlamentar_id)
                             DO UPDATE SET
@@ -261,20 +247,13 @@ def parlamentares_controle_historico_dag() -> None:
                         )
                     else:
                         logging.warning(
-                            "[parlamentares_controle_historico_dag.py] "
-                            "Snapshot de atuais vazio para fonte="
-                            f"{fonte}. Fechamento ignorado nesta execucao."
+                            f"[parlamentares_controle_historico_dag.py] Snapshot de atuais vazio para "
+                            f"fonte={fonte}. Fechamento ignorado nesta execucao."
                         )
 
-                # Se já existe histórico carregado para o parlamentar, evita recarga
-                # inicial desnecessária marcando last_historico_at para os sem valor.
-                if _table_exists(
-                    cursor, "camara_deputados", "deputados_historico"
-                ) and _table_has_column(
-                    cursor,
-                    "camara_deputados",
-                    "deputados_historico",
-                    "parlamentar_id",
+                # Evita recarga inicial desnecessária em parlamentares já contidos na bronze nativa
+                if _table_exists(cursor, "camara_deputados", "deputados_historico") and _table_has_column(
+                    cursor, "camara_deputados", "deputados_historico", "parlamentar_id"
                 ):
                     cursor.execute(
                         f"""
@@ -287,20 +266,14 @@ def parlamentares_controle_historico_dag() -> None:
                                SELECT 1
                                  FROM camara_deputados.deputados_historico h
                                 WHERE h.parlamentar_id::text ~ '^[0-9]+$'
-                                                                    AND CAST(h.parlamentar_id::text AS BIGINT)
-                                                                            = c.parlamentar_id
+                                  AND CAST(h.parlamentar_id::text AS BIGINT) = c.parlamentar_id
                            )
                         """,
                         (now, now),
                     )
 
-                if _table_exists(
-                    cursor, "senado_federal", "senadores_historico"
-                ) and _table_has_column(
-                    cursor,
-                    "senado_federal",
-                    "senadores_historico",
-                    "parlamentar_id",
+                if _table_exists(cursor, "senado_federal", "senadores_historico") and _table_has_column(
+                    cursor, "senado_federal", "senadores_historico", "parlamentar_id"
                 ):
                     cursor.execute(
                         f"""
@@ -313,8 +286,7 @@ def parlamentares_controle_historico_dag() -> None:
                                SELECT 1
                                  FROM senado_federal.senadores_historico h
                                 WHERE h.parlamentar_id::text ~ '^[0-9]+$'
-                                                                    AND CAST(h.parlamentar_id::text AS BIGINT)
-                                                                            = c.parlamentar_id
+                                  AND CAST(h.parlamentar_id::text AS BIGINT) = c.parlamentar_id
                            )
                         """,
                         (now, now),
@@ -348,19 +320,16 @@ def parlamentares_controle_historico_dag() -> None:
         ]
 
         logging.info(
-            "[parlamentares_controle_historico_dag.py] State logic concluido. "
+            f"[parlamentares_controle_historico_dag.py] State logic concluido. "
             f"Parlamentares elegiveis para historico: {len(candidatos)}"
         )
         return candidatos
 
     @task
     def extrair_historico(candidatos: list[dict[str, str]]) -> None:
-        """Task 3: Extrai histórico conforme estado e atualiza ciclo de vida."""
+        """Task 3: Extrai histórico da fonte oficial e injeta na base."""
         if not candidatos:
-            logging.info(
-                "[parlamentares_controle_historico_dag.py] "
-                "Nenhum parlamentar elegivel para historico"
-            )
+            logging.info("[parlamentares_controle_historico_dag.py] Nenhum parlamentar elegivel para historico")
             return
 
         conn_str = get_postgres_conn("postgres_mir")
@@ -404,9 +373,8 @@ def parlamentares_controle_historico_dag() -> None:
 
                 if not extracao_ok:
                     logging.warning(
-                        "[parlamentares_controle_historico_dag.py] Sem confirmação de "
-                        f"extração para fonte={fonte}, parlamentar_id={parlamentar_id}. "
-                        "Status mantido."
+                        f"[parlamentares_controle_historico_dag.py] Sem confirmação de "
+                        f"extração para fonte={fonte}, parlamentar_id={parlamentar_id}. Status mantido."
                     )
                     continue
 
@@ -414,25 +382,12 @@ def parlamentares_controle_historico_dag() -> None:
                 status_updates.append((novo_status, fonte, parlamentar_id))
             except Exception as e:
                 logging.error(
-                    "[parlamentares_controle_historico_dag.py] Erro ao extrair historico "
+                    f"[parlamentares_controle_historico_dag.py] Erro ao extrair historico "
                     f"fonte={fonte}, parlamentar_id={parlamentar_id}: {e}"
                 )
 
         if historico_camara:
-            # Proteção contra duplicidade: limpa os registros anteriores antes de inserir o novo batch da API
-            camara_ids = tuple(set(item["parlamentar_id"] for item in historico_camara))
-            with psycopg2.connect(conn_str) as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema=%s AND table_name=%s)",
-                        ("camara_deputados", "deputados_historico")
-                    )
-                    if cursor.fetchone()[0]:
-                        cursor.execute(
-                            "DELETE FROM camara_deputados.deputados_historico WHERE parlamentar_id IN %s",
-                            (camara_ids,)
-                        )
-            
+            _clean_existing_historico(conn_str, "camara_deputados", "deputados_historico", historico_camara)
             db.insert_data(
                 historico_camara,
                 table_name="deputados_historico",
@@ -440,20 +395,7 @@ def parlamentares_controle_historico_dag() -> None:
             )
 
         if historico_senado:
-            # Proteção contra duplicidade: limpa os registros anteriores antes de inserir o novo batch da API
-            senado_ids = tuple(set(item["parlamentar_id"] for item in historico_senado))
-            with psycopg2.connect(conn_str) as conn:
-                with conn.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema=%s AND table_name=%s)",
-                        ("senado_federal", "senadores_historico")
-                    )
-                    if cursor.fetchone()[0]:
-                        cursor.execute(
-                            "DELETE FROM senado_federal.senadores_historico WHERE parlamentar_id IN %s",
-                            (senado_ids,)
-                        )
-
+            _clean_existing_historico(conn_str, "senado_federal", "senadores_historico", historico_senado)
             db.insert_data(
                 historico_senado,
                 table_name="senadores_historico",
@@ -480,7 +422,7 @@ def parlamentares_controle_historico_dag() -> None:
                     )
 
         logging.info(
-            "[parlamentares_controle_historico_dag.py] Extração concluida. "
+            f"[parlamentares_controle_historico_dag.py] Extração concluida. "
             f"Historico camara={len(historico_camara)}, "
             f"historico senado={len(historico_senado)}, "
             f"status atualizados={len(status_updates)}"
