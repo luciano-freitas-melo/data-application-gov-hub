@@ -1,0 +1,28 @@
+version: 2
+
+models:
+
+  - name: num_transf_n_plano_acao
+    description: >
+      View de mapeamento entre o número de transferência do SIAFI (num_transf / nc_transferencia)
+      e o identificador do Plano de Ação do TransfereGov (plano_acao / id_plano_acao).
+      É a ponte central que conecta os dois sistemas.
+
+      O cruzamento é feito via Notas de Crédito: o SIAFI registra a NC com nc_transferencia
+      e o TransfereGov registra a mesma NC com id_plano_acao. A correspondência é feita
+      pela chave composta (nc, ug_emitente).
+    meta:
+      tags:
+        - view
+    columns:
+      - name: num_transf
+        description: >
+          Número da transferência TED conforme registrado no SIAFI (nc_transferencia).
+          Chave de entrada — é o identificador que NCs, NEs e PFs usam para referenciar
+          uma transferência específica.
+      - name: plano_acao
+        description: >
+          Identificador do Plano de Ação no TransfereGov (id_plano_acao), obtido via
+          cruzamento da NC entre SIAFI e TransfereGov. Pode ser nulo quando a NC do SIAFI
+          não possui correspondência no TransfereGov. Tipo text na view — consumidores
+          devem fazer cast para integer conforme necessário.

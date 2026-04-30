@@ -101,13 +101,16 @@ class ClientPostgresDB:
             )
             return
 
-        self.create_table_if_not_exists(
-            data[0], table_name, primary_key=primary_key, schema=schema, conn=conn
-        )
-
         flattened_data = self._flatten_data(data)
         columns = list(flattened_data[0].keys())
-        values = [tuple(item.values()) for item in flattened_data]
+        column_probe = {col: None for col in columns}
+
+        self.create_table_if_not_exists(
+            column_probe, table_name, primary_key=primary_key, schema=schema, conn=conn
+        )
+        self.alter_table(column_probe, table_name, schema=schema, conn=conn)
+
+        values = [tuple(item.get(col) for col in columns) for item in flattened_data]
 
         sql = f"INSERT INTO {schema}.{table_name} ({', '.join(columns)}) VALUES %s"
 
@@ -122,6 +125,20 @@ class ClientPostgresDB:
                     psycopg2.extras.execute_values(cursor, sql, values)
                     logging.info(
                         f"[cliente_postgres.py] Inserted data into {schema}.{table_name}"
+                    )
+                except psycopg2.errors.UndefinedColumn as err:
+                    logging.warning(
+                        f"[cliente_postgres.py] Missing column detected in {schema}.{table_name}: "
+                        f"{err}. Tentando alterar tabela e reinserir."
+                    )
+                    connection.rollback()
+                    column_probe = {col: None for col in columns}
+                    self.alter_table(
+                        column_probe, table_name, schema=schema, conn=connection
+                    )
+                    psycopg2.extras.execute_values(cursor, sql, values)
+                    logging.info(
+                        f"[cliente_postgres.py] Inserted data into {schema}.{table_name} after alter"
                     )
                 except psycopg2.Error as err:
                     logging.error(
@@ -201,13 +218,17 @@ class ClientPostgresDB:
                 return cursor.fetchall()
 
     def alter_table(
-        self, data: Dict[str, Any], table_name: str, schema: str = "raw"
+        self,
+        data: Dict[str, Any],
+        table_name: str,
+        schema: str = "raw",
+        conn=None,
     ) -> None:
         flattened_data = self._flatten_data([data])[0]
         columns = list(flattened_data.keys())
 
-        with psycopg2.connect(self.conn_str) as conn:
-            with conn.cursor() as cursor:
+        def _execute(connection):
+            with connection.cursor() as cursor:
                 cursor.execute(
                     f"""
                     SELECT column_name
@@ -236,10 +257,16 @@ class ClientPostgresDB:
                                 f"to {schema}.{table_name}. Error: {str(e)}"
                             )
 
-                conn.commit()
-                logging.info(
-                    f"[cliente_postgres.py] Table {schema}.{table_name} altered successfully"
-                )
+        if conn is not None:
+            _execute(conn)
+        else:
+            with psycopg2.connect(self.conn_str) as new_conn:
+                _execute(new_conn)
+                new_conn.commit()
+
+        logging.info(
+            f"[cliente_postgres.py] Table {schema}.{table_name} altered successfully"
+        )
 
     def get_nota_credito(self) -> List[Tuple[Any, ...]]:
         query = (
@@ -254,18 +281,18 @@ class ClientPostgresDB:
     def remove_duplicates(
         self, table_name: str, column_mapping: Dict[int, str], schema: str = "siafi"
     ) -> None:
-        try:
-            columns = ", ".join(column_mapping.values())
-            delete_query = f"""
-            DELETE FROM {schema}.{table_name}
-            WHERE ctid NOT IN (
-                SELECT MIN(ctid)
-                FROM {schema}.{table_name}
-                GROUP BY {columns}
-            );
-            """
-            vacuum_query = f"VACUUM {schema}.{table_name};"
+        columns = ", ".join(column_mapping.values())
+        delete_query = f"""
+        DELETE FROM {schema}.{table_name}
+        WHERE ctid NOT IN (
+            SELECT MIN(ctid)
+            FROM {schema}.{table_name}
+            GROUP BY {columns}
+        );
+        """
+        vacuum_query = f"VACUUM {schema}.{table_name};"
 
+        try:
             logging.info(
                 f"Executando query para remover duplicados em {schema}.{table_name}"
             )
@@ -277,20 +304,29 @@ class ClientPostgresDB:
                     logging.info(
                         f"Duplicados removidos com sucesso de {schema}.{table_name}"
                     )
-
-            with psycopg2.connect(self.conn_str) as conn:
-                conn.autocommit = True
-                with conn.cursor() as cursor:
-                    cursor.execute(vacuum_query)
-                    logging.info(
-                        f"VACUUM FULL executado com sucesso em {schema}.{table_name}"
-                    )
-
         except Exception as e:
             logging.error(
-                f"Erro ao remover duplicados ou otimizar {schema}.{table_name}: {str(e)}"
+                f"Erro ao remover duplicados de {schema}.{table_name}: {str(e)}"
             )
             raise
+
+        conn = None
+        try:
+            conn = psycopg2.connect(self.conn_str)
+            conn.autocommit = True
+            with conn.cursor() as cursor:
+                cursor.execute(vacuum_query)
+                logging.info(f"VACUUM executado com sucesso em {schema}.{table_name}")
+        except Exception as e:
+            logging.warning(
+                "Falha ao executar VACUUM em %s.%s (deduplicacao concluida): %s",
+                schema,
+                table_name,
+                str(e),
+            )
+        finally:
+            if conn:
+                conn.close()
 
     def get_codigo_unidade(self) -> list[dict]:
         query = """
@@ -354,7 +390,9 @@ class ClientPostgresDB:
         with psycopg2.connect(self.conn_str) as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query)
-                return [{"nome_cor": row[0], "valor": row[1]} for row in cursor.fetchall()]
+                return [
+                    {"nome_cor": row[0], "valor": row[1]} for row in cursor.fetchall()
+                ]
 
     def get_dashboard_situacao_funcional(self) -> List[Dict[str, Any]]:
         query = """
