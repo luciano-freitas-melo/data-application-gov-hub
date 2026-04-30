@@ -4,6 +4,34 @@ models:
 
 
   # Silver
+  - name: dados_funcionais_enriquecidos
+    description: >
+      Tabela silver que enriquece os dados funcionais dos servidores com campos
+      padronizados de participação no PGD e informações da unidade organizacional
+      de exercício.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: cpf
+        description: CPF do servidor, com apenas dígitos.
+      - name: modalidade_pgd
+        description: Modalidade original de participação no Programa de Gestão e Desempenho (PGD).
+      - name: pdg
+        description: Modalidade de participação no PGD, com valores padronizados para análise.
+      - name: nome_situacao_funcional
+        description: Descrição da situação funcional do servidor.
+      - name: sigla_uorg_exercicio
+        description: Sigla da unidade de exercício.
+      - name: unidade_exercicio
+        description: Unidade de exercício tratada para exibição nas análises.
+      - name: nome_municipio_uorg
+        description: Município da unidade organizacional de exercício.
+      - name: dt_ingest
+        description: >
+          Data e hora (UTC-3 Brasília) mais recente de ingestão dos dados das tabelas fonte utilizadas neste modelo.
+
+
   - name: afastamento_consolidado
     description: >
       Tabela gold que consolida os registros de afastamento dos servidores, integrando as fontes 
@@ -333,3 +361,27 @@ models:
         description: >
           Data e hora (UTC-3 Brasília) mais recente de ingestão dos dados das tabelas fonte utilizadas neste modelo.
 
+
+
+  - name: resumo_atividade_
+    description: >
+      Tabela que consolida o quantitativo de servidores ativos por nível de cargo, classe/padrão, situação funcional e nome do cargo.
+      Exclui os servidores com situação funcional 'APOSENTADO'. Derivada do modelo `dados_funcionais`.
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: nivel
+        description: >
+          Sigla do nível do cargo (ex: DAS, FG, etc.).
+      - name: classe_padrao
+        description: Combinação de código de classe e padrão no formato 'COD_CLASSE-COD_PADRAO'.
+      - name: nome_situacao_funcional
+        description: Situação funcional do servidor (excluindo APOSENTADO).
+      - name: nome_cargo
+        description: Nome do cargo efetivo do servidor.
+      - name: qtd
+        description: Quantidade de servidores nessa combinação de atributos.
+      - name: dt_ingest
+        description: >
+          Data e hora (UTC-3 Brasília) mais recente de ingestão dos dados das tabelas fonte utilizadas neste modelo.

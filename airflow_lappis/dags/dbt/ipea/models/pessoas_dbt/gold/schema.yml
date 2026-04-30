@@ -172,6 +172,20 @@ models:
         description: Nome ou denominação do cargo ocupado.
       - name: servidores_carreira
         description: Indica se o servidor está em cargo de carreira ou em nomeação livre.
+      - name: pdg
+        description: Modalidade de participação do servidor no PGD, com valores padronizados para análise.
+      - name: unidade_exercicio
+        description: Unidade de exercício tratada para exibição nas análises de hierarquia.
+      - name: nome_municipio_uorg
+        description: Município da unidade organizacional associado à sigla da unidade.
+      - name: cod_escolaridade_principal
+        description: Código da principal escolaridade cadastrada para o servidor.
+      - name: nome_escolaridade_principal
+        description: Nome da principal escolaridade cadastrada para o servidor.
+      - name: nome_deficiencia_fisica
+        description: Descrição da deficiência física cadastrada para o servidor, quando houver.
+      - name: nome_cargo_emprego
+        description: Nome do cargo ou emprego do servidor conforme dados detalhados.
       - name: dt_ingest
         description: >
           Data e hora (UTC-3 Brasília) mais recente de ingestão dos dados das tabelas fonte utilizadas neste modelo.
@@ -362,3 +376,24 @@ models:
         description: >
           Data e hora (UTC-3 Brasília) mais recente de ingestão dos dados das tabelas fonte utilizadas neste modelo.
 
+  - name: distribuicao_raca_cor_sexo
+    description: >
+      Tabela agregada que apresenta a distribuição de servidores por raça/cor e sexo.
+      A análise utiliza dados da tabela de hierarquia para calcular a quantidade de servidores
+      por gênero em cada categoria de raça/cor e situação funcional.
+      O campo 'feminino' é multiplicado por -1 para facilitar visualizações em pirâmide.
+    meta:
+      tags:
+        - gold
+    columns:
+      - name: nome_cor
+        description: Cor ou raça do servidor conforme autodeclaração.
+      - name: feminino
+        description: Quantidade de servidores do sexo feminino (valor negativo).
+      - name: masculino
+        description: Quantidade de servidores do sexo masculino.
+      - name: nome_situacao_funcional
+        description: Descrição da situação funcional do servidor.
+      - name: dt_ingest
+        description: >
+          Data e hora (UTC-3 Brasília) mais recente de ingestão dos dados das tabelas fonte utilizadas neste modelo.
