@@ -32,13 +32,14 @@ def siconv_ingestao_dag() -> None:
         zip_path: str,
         nome_tabela: str,
         nome_csv: str,
-        postgres_conn_str: str,
         conflict_fields: list,
         primary_key: list,
         skip_rows: int,
         colunas: list,
         truncate_before_insert: bool = False,
     ) -> None:
+
+        postgres_conn_str = get_postgres_conn("postgres_mir")
 
         logging.info(f"Iniciando ingestão da tabela {nome_tabela}")
 
@@ -53,8 +54,8 @@ def siconv_ingestao_dag() -> None:
         tamanho_lote = 5000
         total_inserido = 0
 
-        with psycopg2.connect(postgres_conn_str) as conn:
-
+        conn = psycopg2.connect(postgres_conn_str)
+        try:
             if truncate_before_insert:
                 logging.info(f"Truncando tabela siconv.{nome_tabela}...")
                 with conn.cursor() as cursor:
@@ -104,6 +105,8 @@ def siconv_ingestao_dag() -> None:
                 total_inserido += len(lote)
 
             conn.commit()
+        finally:
+            conn.close()
 
         if total_inserido == 0:
             logging.warning(f"Nenhum registro processado para {nome_tabela}")
@@ -124,18 +127,13 @@ def siconv_ingestao_dag() -> None:
 
     path_zip = baixar_siconv()
 
-    postgres_conn_str = get_postgres_conn("postgres_mir")
-
     ultima_task = path_zip
 
     for tabela in TABELAS_SICONV:
-        task_atual = ingerir_tabela.override(
-            task_id=f"ingerir_{tabela['nome_tabela']}"
-        )(
+        task_atual = ingerir_tabela.override(task_id=f"ingerir_{tabela['nome_tabela']}")(
             zip_path=path_zip,
             nome_tabela=tabela["nome_tabela"],
             nome_csv=tabela["nome_csv"],
-            postgres_conn_str=postgres_conn_str,
             conflict_fields=tabela["conflict_fields"],
             primary_key=tabela["primary_key"],
             skip_rows=tabela["skip_rows"],
