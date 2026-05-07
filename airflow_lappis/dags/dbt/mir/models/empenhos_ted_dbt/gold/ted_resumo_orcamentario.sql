@@ -4,6 +4,7 @@ with
 	planos_acao_deduplicado as (
 		select
 			id_plano_acao,
+			id_programa,
 			sq_instrumento as num_transf,
 			sigla_unidade_descentralizada,
 			vl_total_plano_acao,
@@ -18,6 +19,16 @@ with
 			from {{ ref("planos_acao_ted") }} pa
 		) pa_filtrado
 		where rn = 1
+	),
+
+	programas_tb as (
+		select
+			pad.id_plano_acao,
+			prog.sigla_unidade_responsavel_acompanhamento,
+			prog.tx_nome_institucional_programa,
+			prog.tx_objetivo_programa
+		from planos_acao_deduplicado pad
+		left join {{ ref("programas_ted") }} prog using (id_programa)
 	),
 
 	valor_firmado_tb as (
@@ -46,6 +57,8 @@ with
 					else 0
 				end
 			) as orcamento_devolvido,
+			max(programa_governo) as programa_governo,
+			max(programa_governo_descricao) as programa_governo_descricao,
 			max(dt_ingest) as dt_ingest_vo
 		from {{ ref("nc_plano_acao") }}
 		where ptres not in ('-9')
@@ -113,6 +126,7 @@ with
 select
 	plano_acao,
 	num_transf,
+	sigla_unidade_descentralizada,
 	valor_firmado,
 	orcamento_recebido,
 	orcamento_devolvido,
@@ -125,7 +139,13 @@ select
 	financeiro_recebido,
 	financeiro_devolvido,
 	financeiro_cancelado,
-	greatest(vf.dt_ingest_vf, jp.dt_ingest_jp) as dt_ingest
+	greatest(vf.dt_ingest_vf, jp.dt_ingest_jp) as dt_ingest,
+	prog.sigla_unidade_responsavel_acompanhamento,
+	prog.tx_nome_institucional_programa,
+	prog.tx_objetivo_programa,
+	jp.programa_governo,
+	jp.programa_governo_descricao
 from valor_firmado_tb vf
 full join join_parcial jp using (plano_acao, num_transf)
+left join programas_tb prog on plano_acao = prog.id_plano_acao
 where (plano_acao is not null) or (num_transf is not null)

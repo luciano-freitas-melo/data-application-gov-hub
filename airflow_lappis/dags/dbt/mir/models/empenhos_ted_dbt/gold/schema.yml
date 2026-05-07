@@ -11,8 +11,6 @@ models:
       nas Notas de Empenho (SIAFI) e os recursos financeiros liberados via Programações
       Financeiras (SIAFI + TransfereGov). As quatro dimensões são combinadas via FULL JOIN
       para garantir que nenhum registro seja perdido mesmo que exista em apenas uma fonte.
-      O campo ted_beneficiario_emitente é sempre 'nao_indicado' pois a fonte bronze
-      planos_acao_ted não disponibiliza essa informação para o MIR.
     meta:
       tags:
         - gold
@@ -27,10 +25,6 @@ models:
       - name: sigla_unidade_descentralizada
         description: >
           Sigla da unidade receptora dos recursos, conforme cadastrado no Plano de Ação do TransfereGov.
-      - name: ted_beneficiario_emitente
-        description: >
-          Indica se a unidade do Plano de Ação é beneficiária ou emitente da TED.
-          Sempre 'nao_indicado' para o MIR, pois a fonte bronze não disponibiliza esse campo.
       - name: valor_firmado
         description: >
           Valor total pactuado no Plano de Ação (vl_total_plano_acao), conforme o registro
@@ -84,6 +78,25 @@ models:
           Timestamp mais recente de ingestão entre todas as fontes que compõem o registro
           (planos_acao_ted, nc_plano_acao, empenhos_por_plano_acao, pf_unificado).
           Indica quando os dados foram atualizados pela última vez (UTC-3).
+      - name: sigla_unidade_responsavel_acompanhamento
+        description: >
+          Sigla da unidade responsável pelo acompanhamento do programa, proveniente
+          de programas_ted (TransfereGov).
+      - name: tx_nome_institucional_programa
+        description: >
+          Nome institucional do programa ao qual o Plano de Ação está vinculado,
+          proveniente de programas_ted (TransfereGov).
+      - name: tx_objetivo_programa
+        description: >
+          Descrição do objetivo do programa, proveniente de programas_ted (TransfereGov).
+      - name: programa_governo
+        description: >
+          Código do programa de governo conforme classificação orçamentária SIAFI,
+          proveniente de nc_plano_acao.
+      - name: programa_governo_descricao
+        description: >
+          Descrição do programa de governo conforme classificação orçamentária SIAFI,
+          proveniente de nc_plano_acao.
     tests:
       - verificacao_tipagem:
           nome_tabela: 'siafi_dbt.ted_resumo_orcamentario'
