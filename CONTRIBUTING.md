@@ -362,6 +362,20 @@ mkdocs build
 - **Novas dependências:** discuta em uma issue antes de adicionar novos pacotes ou serviços.
 - **Idioma:** código e comentários técnicos em **inglês**; issues, PRs e documentação em **português**.
 
+## FAQ
+
+**Posso contribuir sem ter sido atribuído a uma issue?**
+> Sim, para correções triviais como typos na documentação. Para mudanças em modelos DBT, DAGs ou infraestrutura, abra ou comente uma issue antes.
+
+**Não tenho acesso aos sistemas estruturantes (SIAFI, SIAPE). Posso contribuir?**
+> Sim! Muitas contribuições não exigem acesso a APIs governamentais — documentação, testes DBT com dados sintéticos, melhorias de infraestrutura e dashboards no Superset são exemplos.
+
+**Onde posso tirar dúvidas técnicas sobre DBT, Airflow ou Superset?**
+> Consulte os [tutoriais da documentação](https://gov-hub.io/govhub/documentacao/instalacao/) ou abra uma [Discussion](https://github.com/GovHub-br/govhub/discussions) no repositório.
+
+**Meu PR foi fechado sem merge. O que faço?**
+> Leia o motivo no comentário de fechamento, corrija os pontos indicados e abra um novo PR referenciando o anterior.
+
 ---
 
 <div align="center">
