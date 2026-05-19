@@ -173,3 +173,172 @@ models:
           nome_tabela: 'siconv_dbt.emendas_convenio'
           nome_coluna: 'vl_global_conv'
           tipo_esperado: 'numeric'
+
+  - name: proposta_convenio
+    description: >
+      Tabela da camada silver que cruza convênios com propostas do SICONV,
+      filtrando apenas as modalidades CONVENIO e TERMO DE FOMENTO.
+      Utiliza o `id_proposta` como chave de junção entre as tabelas de convênio
+      e proposta da camada bronze. Somente convênios que possuem proposta
+      associada nas modalidades filtradas são incluídos (INNER JOIN).
+    meta:
+      tags:
+        - silver
+    columns:
+      - name: nr_convenio
+        description: "Número do convênio."
+      - name: dia_conv
+        description: "Dia de assinatura do convênio."
+      - name: mes_conv
+        description: "Mês de assinatura do convênio."
+      - name: ano_conv
+        description: "Ano de assinatura do convênio."
+      - name: dia_assin_conv
+        description: "Data de assinatura do convênio."
+      - name: sit_convenio
+        description: "Situação do convênio."
+      - name: subsituacao_conv
+        description: "Subsituação do convênio."
+      - name: situacao_publicacao
+        description: "Situação de publicação do convênio."
+      - name: instrumento_ativo
+        description: "Indica se o instrumento está ativo."
+      - name: ind_opera_obtv
+        description: "Indicador de operação OBTV."
+      - name: nr_processo
+        description: "Número do processo."
+      - name: ug_emitente
+        description: "Código da UG emitente."
+      - name: dia_publ_conv
+        description: "Data de publicação do convênio."
+      - name: dia_inic_vigenc_conv
+        description: "Data de início da vigência do convênio."
+      - name: dia_fim_vigenc_conv
+        description: "Data de fim da vigência do convênio."
+      - name: dia_fim_vigenc_original_conv
+        description: "Data de fim da vigência original do convênio."
+      - name: dias_prest_contas
+        description: "Prazo em dias para prestação de contas."
+      - name: dia_limite_prest_contas
+        description: "Data limite para prestação de contas."
+      - name: data_suspensiva
+        description: "Data da cláusula suspensiva."
+      - name: data_retirada_suspensiva
+        description: "Data de retirada da cláusula suspensiva."
+      - name: dias_clausula_suspensiva
+        description: "Dias de cláusula suspensiva."
+      - name: situacao_contratacao
+        description: "Situação da contratação."
+      - name: ind_assinado
+        description: "Indica se o convênio foi assinado."
+      - name: motivo_suspensao
+        description: "Motivo da suspensão do convênio."
+      - name: ind_foto
+        description: "Indica se há foto associada."
+      - name: qtde_convenios
+        description: "Quantidade de convênios."
+      - name: qtd_ta
+        description: "Quantidade de termos aditivos."
+      - name: qtd_prorroga
+        description: "Quantidade de prorrogações."
+      - name: vl_global_conv
+        description: "Valor global do convênio."
+      - name: vl_repasse_conv
+        description: "Valor de repasse do convênio."
+      - name: vl_contrapartida_conv
+        description: "Valor de contrapartida do convênio."
+      - name: vl_empenhado_conv
+        description: "Valor empenhado do convênio."
+      - name: vl_desembolsado_conv
+        description: "Valor desembolsado do convênio."
+      - name: vl_saldo_reman_tesouro
+        description: "Valor do saldo remanescente do tesouro."
+      - name: vl_saldo_reman_convenente
+        description: "Valor do saldo remanescente do convenente."
+      - name: vl_rendimento_aplicacao
+        description: "Valor do rendimento de aplicação."
+      - name: vl_ingresso_contrapartida
+        description: "Valor de ingresso de contrapartida."
+      - name: vl_saldo_conta
+        description: "Valor do saldo em conta."
+      - name: valor_global_original_conv
+        description: "Valor global original do convênio."
+      - name: id_proposta
+        description: "Identificador único da proposta."
+      - name: uf_proponente
+        description: "Unidade Federativa do proponente."
+      - name: munic_proponente
+        description: "Município do proponente."
+      - name: cod_munic_ibge
+        description: "Código IBGE do município."
+      - name: cod_orgao_sup
+        description: "Código do órgão superior."
+      - name: desc_orgao_sup
+        description: "Descrição do órgão superior."
+      - name: natureza_juridica
+        description: "Natureza jurídica do proponente."
+      - name: nr_proposta
+        description: "Número da proposta."
+      - name: dia_proposta
+        description: "Data da proposta."
+      - name: cod_orgao
+        description: "Código do órgão."
+      - name: desc_orgao
+        description: "Descrição do órgão."
+      - name: modalidade
+        description: "Modalidade da proposta (CONVENIO ou TERMO DE FOMENTO)."
+      - name: identif_proponente
+        description: "Identificação do proponente (CNPJ/CPF)."
+      - name: nm_proponente
+        description: "Nome do proponente."
+      - name: cep_proponente
+        description: "CEP do proponente."
+      - name: endereco_proponente
+        description: "Endereço do proponente."
+      - name: bairro_proponente
+        description: "Bairro do proponente."
+      - name: nm_banco
+        description: "Nome do banco."
+      - name: situacao_conta
+        description: "Situação da conta bancária."
+      - name: situacao_projeto_basico
+        description: "Situação do projeto básico."
+      - name: sit_proposta
+        description: "Situação da proposta."
+      - name: dia_inic_vigencia_proposta
+        description: "Data de início da vigência da proposta."
+      - name: dia_fim_vigencia_proposta
+        description: "Data de fim da vigência da proposta."
+      - name: objeto_proposta
+        description: "Objeto da proposta."
+      - name: item_investimento
+        description: "Item de investimento."
+      - name: enviada_mandataria
+        description: "Indica se foi enviada à mandatária."
+      - name: nome_subtipo_proposta
+        description: "Nome do subtipo da proposta."
+      - name: descricao_subtipo_proposta
+        description: "Descrição do subtipo da proposta."
+      - name: vl_global_prop
+        description: "Valor global da proposta."
+      - name: vl_repasse_prop
+        description: "Valor de repasse da proposta."
+      - name: vl_contrapartida_prop
+        description: "Valor de contrapartida da proposta."
+    tests:
+      - verificacao_tipagem:
+          nome_tabela: 'siconv_dbt.proposta_convenio'
+          nome_coluna: 'nr_convenio'
+          tipo_esperado: 'integer'
+      - verificacao_tipagem:
+          nome_tabela: 'siconv_dbt.proposta_convenio'
+          nome_coluna: 'id_proposta'
+          tipo_esperado: 'integer'
+      - verificacao_tipagem:
+          nome_tabela: 'siconv_dbt.proposta_convenio'
+          nome_coluna: 'vl_global_conv'
+          tipo_esperado: 'numeric'
+      - verificacao_tipagem:
+          nome_tabela: 'siconv_dbt.proposta_convenio'
+          nome_coluna: 'vl_global_prop'
+          tipo_esperado: 'numeric'
