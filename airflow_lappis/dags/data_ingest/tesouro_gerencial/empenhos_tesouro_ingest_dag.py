@@ -117,6 +117,7 @@ with DAG(
             unique_key = [
                 "ne_ccor",
                 "natureza_despesa",
+                "natureza_despesa_detalhada",
                 "doc_observacao",
                 "ne_ccor_ano_emissao",
                 "emissao_dia",
